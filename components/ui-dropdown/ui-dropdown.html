@@ -1,0 +1,69 @@
+<dom-module id="ui-dropdown">
+	<style>
+		:host { display: block; }
+	</style>
+	<template>
+		<content></content>
+	</template>
+</dom-module>
+
+<script>
+	Polymer({
+		is: "ui-dropdown",
+		
+		properties: {
+			isOpen: {
+				type: Boolean,
+				value: false,
+				notify: true,
+				observer: "onChange"
+			}
+		},
+		
+		ready: function() {
+			this.async(function() {
+				var toggle = Polymer.dom(this).querySelector("[dropdown-toggle]");
+				if (toggle) {
+					toggle.addEventListener("click", this.toggle.bind(this));
+				}
+			});
+			
+			document.addEventListener("click", this._onDocumentClick.bind(this));
+		},
+		
+		toggle: function(e) {
+			e.preventDefault();
+			
+			this.set("isOpen", !this.isOpen);
+		},
+		
+		onChange: function() {
+			var menu = Polymer.dom(this).querySelector("[dropdown-menu]");
+			if (menu) {
+				if (this.isOpen) {
+					menu.classList.add("open");
+					this.fire("dropdown-open");
+				} else {
+					menu.classList.remove("open");
+					this.fire("dropdown-close");
+				}
+			}
+		},
+		
+		_onDocumentClick: function(e) {
+			var close = true, el = e.target;
+			
+			while (el) {
+				if (el === this) {
+					close = false;
+				} else {
+					el = el.parentNode;
+				}
+			}
+			
+			if (close) {
+				this.set("isOpen", false);
+			}
+		}
+	});
+</script>

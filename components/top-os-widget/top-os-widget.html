@@ -1,0 +1,221 @@
+<link rel="import" href="../ui-widget/ui-widget.html">
+<link rel="import" href="../ui-block/ui-block.html">
+<link rel="import" href="../../bower_components/neon-animation/neon-animation.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../bower_components/paper-styles/paper-styles.html">
+
+<dom-module id="top-os-widget">
+	<style>
+		:host { 
+			display: block;
+			position: relative;
+		}
+		
+		:host .color-green { background-color: #4caf50 !important; color: #fff; }
+		:host .color-orange { background-color: #ff5722 !important; color: #fff; }
+		:host .color-blue { background-color: #0288d1 !important; color: #fff; }
+		
+		:host .os-list { text-align: center; }
+			
+			:host .os-list > li { margin-bottom: 10px; }
+			:host .os-list > li:last-of-type { margin-bottom: 0; }
+				
+				:host .os-list > li > a { height: 30px; line-height: 30px; padding: 0; opacity: .9; }
+				:host .os-list > li > a:hover { opacity: 1; }
+				
+		:host .graphic {
+			margin-bottom: 20px;
+			height: 200px;
+			background-color: #eee;
+			border-radius: 10px;
+			padding: 20px;
+		}
+		
+		:host .os-summary {
+			position: absolute;
+			z-index: 3;
+			border-radius: 3px;
+			width: 0;
+			height: 0;
+			overflow: hidden;
+		}
+		:host .os-summary.selected { 
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			width: auto;
+			height: auto;
+			overflow: auto;
+			padding: 20px;
+		}
+			
+			:host .os-summary .back-button {
+				position: absolute;
+				top: 10px;
+				left: 10px;
+			}
+		
+		:host #mainPage {
+			position: relative;
+			z-index: 2;
+		}
+	</style>
+	
+	<template>
+		<ui-widget id="mainPage">
+			<h4>Operating Systems</h4>
+			<div class="graphic">
+				<ul class="nav nav-pills nav-stacked os-list">
+					<template is="dom-repeat" items="{{osList}}" as="os">
+						<li>
+							<a class$="{{osColor(os)}}" href="#" on-click="selectOs">{{os.name}}</a>
+						</li>
+					</template>
+				</ul>
+			</div>
+		</ui-widget>
+		
+		<template is="dom-repeat" items="{{osList}}" as="os">
+			<div class$="{{osSummaryClass(os)}}">
+				<paper-icon-button class="back-button" icon="arrow-back" on-click="closeOs"></paper-icon-button>
+
+				<h4 class="text-center">
+					<span>{{os.name}}</span>
+				</h4>
+				<ul class="nav nav-pills nav-stacked">
+					<template is="dom-repeat" items="{{os.versions}}" as="version">
+						<li>
+							<a href="#" class="flex valign-center">
+								<span class="grow-2">{{version.name}}</span>
+								<small>{{version.instances}}</small>
+							</a>
+						</li>
+					</template>
+				</ul>
+			</div>
+		</template>
+	</template>
+	
+	<script>
+		Polymer({
+			is: "top-os-widget",
+			
+			behaviors: [
+				Polymer.NeonAnimationRunnerBehavior
+			],
+			
+			listeners: {
+				"neon-animation-finish": "_onAnimationFinish"
+			},
+			
+			properties: {
+				selectedPage: {
+					type: Number,
+					value: 0
+				},
+				osList: {
+					type: Array,
+					value: [{
+						name: "Windows",
+						instances: 400,
+						color: "green",
+						versions: [{
+							name: "Windows Server 2012",
+							instances: 200
+						}, {
+							name: "Windows Web Server 2012",
+							instances: 20
+						}, {
+							name: "Windows Server 2010",
+							instances: 100
+						}]
+					}, {
+						name: "Linux",
+						instances: 160,
+						versions: [],
+						color: "orange"
+					}, {
+						name: "Other",
+						instances: 24,
+						versions: [],
+						color: "blue"
+					}]
+				},
+				sharedElements: {
+					value: {}
+				},
+				animationConfig: {
+					value: function() {
+						return {
+							entry: [{
+								name: "hero-animation",
+								fromPage: this.$.mainPage
+							}],
+							exit: [{
+								name: "fade-out-animation"
+							}]
+						}
+					}
+				}
+			},
+			
+			ready: function() {},
+			
+			osColor: function(os) {
+				var colors = ["green", "orange", "blue"];
+				var index = this.osList.indexOf(os);
+				
+				if (index > -1) {
+					return "color-"+ colors[index];
+				}
+			},
+			
+			osSummaryClass: function(os) {
+				return "os-summary "+ this.osColor(os);
+			},
+			
+			selectOs: function(e) {
+				var target = e.target;
+				var os = e.model.os;
+				var index = this.osList.indexOf(os);
+				var pages = Polymer.dom(this.root).querySelectorAll(".os-summary");
+				var fromPage = this.$.mainPage;
+				var toPage = pages[index];
+				
+				this.sharedElements.button = target;
+				
+				this.animationConfig.entry[0].id = "button";
+				this.animationConfig.entry[0].toPage = toPage;
+				this.animationConfig.exit[0].node = toPage;
+				
+				toPage.sharedElements = {
+					button: toPage
+				};
+				toPage.classList.add("selected");
+				
+				fromPage.sharedElements = this.sharedElements;
+				
+				this._animationType = "entry";
+				this._animatedPage = toPage;
+				
+				console.log(this._animatedPage, this.animationConfig);
+				
+				this.playAnimation("entry");
+			},
+			
+			closeOs: function(e) {
+				this._animationType = "exit";
+				this.playAnimation("exit");
+			},
+			
+			_onAnimationFinish: function() {
+				if (this._animationType === "exit") {
+					this._animatedPage.classList.remove("selected");
+				} else if (this._animationType === "entry") {
+					//this._animatedPage.classList.add("selected");
+				}
+			}
+		});
+	</script>
+</dom-module>

@@ -1,0 +1,88 @@
+<link rel="import" href="../../bower_components/paper-ripple/paper-ripple.html">
+
+<dom-module is="ui-nav">
+	<style>
+		:host { 
+			display: block; 
+		}
+		
+		:host .nav.nav-stacked > li.divider {
+			border-top: 1px solid rgba(0,0,0,.08);
+			margin: 5px 0;
+		}
+		:host .nav.nav-lg > li > a {
+			font-size: 16px;
+			padding-top: 15px;
+			padding-bottom: 15px;
+			transition: all .3s ease-in-out;
+		}
+		:host .nav > li.danger > a {
+			color: #D32F2F;
+		}
+	</style>
+	<template>
+		<ul class="nav nav-lg nav-pills nav-stacked">
+			<template is="dom-repeat" items="{{pages}}" as="page">
+				<li class$="{{_navItemClass(page.*)}}">
+					<a href="{{page.path}}" hidden="{{!page.path}}" on-click="_onClick">
+						<span>{{page.title}}</span>
+						<paper-ripple></paper-ripple>
+					</a>
+				</li>
+			</template>
+		</ul>
+	</template>
+</dom-module>
+
+<script>
+Polymer({
+	is: "ui-nav",
+
+	properties: {
+		pages: {
+			type: Array,
+			value: []
+		}
+	},
+	
+	select: function(index) {
+		for (var i = 0, p; i < this.pages.length; i++) {
+			p = this.pages[i];
+
+			this.set("pages."+ i +".isActive", i === index);
+		}
+	},
+	
+	_navItemClass: function(observer) {
+		var page = observer.base;
+		var parts = page.className ? [page.className] : [];
+
+		switch (page.is) {
+			case "divider":
+				parts.push("divider");
+			default:
+				break;
+		};
+
+		if (page.isActive) {
+			parts.push("active");
+		}
+
+		return parts.join(" ");
+	},
+	
+	_onClick: function(e) {
+		var page = e.model.page;
+		var result = this.fire("page-selected", {
+			page: page,
+			event: e
+		}, {
+			cancelable: true
+		});
+		
+		if (!result.defaultPrevented) {
+			this.select(this.pages.indexOf(page));
+		}
+	}
+});
+</script>

@@ -1,0 +1,55 @@
+<dom-module id="ui-dynamic-element">
+	<style>
+		:host {
+			display: block;
+		}
+	</style>
+	
+	<template></template>
+	
+	<script>
+		(function() {
+			Polymer({
+				is: "ui-dynamic-element",
+
+				properties: {
+					rootDir: {
+						type: String
+					},
+					name: {
+						type: String
+					},
+					params: {
+						type: Object,
+						value: {}
+					}
+				},
+				
+				observers: [
+					"_onPathChange(rootDir, name)"
+				],
+				
+				_onPathChange: function(rootDir, name) {
+					if (name) {
+						var path = "../../"+ rootDir +"/"+ name +".html";
+						var url = this.resolveUrl(path);
+
+						this.importHref(url, function() {
+							var el = document.createElement(this.name);
+							var dom = Polymer.dom(this.root);
+
+							for (var i in this.params) {
+								el[i] = this.params[i];
+							}
+
+							dom.innerHTML = "";
+							dom.appendChild(el);
+							
+							this.fire("element-update", this);
+						});
+					}
+				}
+			});
+		})();
+	</script>
+</dom-module>

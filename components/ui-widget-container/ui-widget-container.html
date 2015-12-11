@@ -1,0 +1,101 @@
+<dom-module id="ui-widget-container">
+	<style>
+		:host { 
+			display: block;
+			position: relative;
+			width: 100%;
+			padding: 10px;
+			transition: all .3s ease-in-out;
+			z-index: 1;
+		}
+		:host.size-tall { }
+		
+		@media (min-width: 1024px) {
+			:host {
+				width: 50%;
+			}
+			:host.size-tall { width: 50%; }
+			:host.size-wide { width: 100%; }
+		}
+		
+		@media (min-width: 1400px) {
+			:host { 
+				width: 25%; 
+			}
+			:host.size-tall { width: 25%; }
+			:host.size-wide { width: 50%; }
+		}
+		
+	</style>
+	
+	<template>
+		<content></content>
+	</template>
+	
+	<script>
+		Polymer({
+			is: "ui-widget-container",
+
+			properties: {
+				element: {
+					type: String,
+					observer: "_onElementChange"
+				},
+				params: {
+					type: Object,
+					value: {},
+					observer: "_onParamsChange"
+				},
+				size: {
+					type: String,
+					value: "default",
+					reflectToAttribute: true,
+					notify: true,
+					observer: "_onSizeChange"
+				}
+			},
+
+			_elementNode: null,
+			
+			_onElementChange: function() {
+				var element = this.element;
+				var params = this.params;
+				var href = this.resolveUrl("../"+ element +"/"+ element +".html");
+
+				this.importHref(href, function() {
+					this._createElement(element);
+					this._onParamsChange();
+				}, function() {
+					throw new Error("Could not load element: "+ element);
+				});
+			},
+
+			_createElement: function(element) {
+				var container = Polymer.dom(this.root);
+
+				if (this._elementNode) {
+					container.removeChild(this._elementNode);
+				}
+
+				this._elementNode = document.createElement(element);
+				container.appendChild(this._elementNode);
+			},
+
+			_onParamsChange: function() {
+				if (this._elementNode) {
+					for (var i in this.params) {
+						this._elementNode.set(i, this.params[i]);
+					}
+				}
+			},
+			
+			_onSizeChange: function(newSize, oldSize) {
+				if (oldSize) {
+					this.classList.remove("size-"+ oldSize);
+				}
+				this.classList.add("size-"+ newSize);
+				this.fire("size-change", this);
+			}
+		});
+	</script>
+</dom-module>

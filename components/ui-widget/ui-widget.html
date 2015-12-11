@@ -1,0 +1,175 @@
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../bower_components/paper-ripple/paper-ripple.html">
+<link rel="import" href="../../bower_components/paper-spinner/paper-spinner.html">
+<link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../../bower_components/neon-animation/neon-animatable-behavior.html">
+<link rel="import" href="../../bower_components/neon-animation/neon-shared-element-animation-behavior.html">
+
+<link rel="import" href="../ui-menu/ui-menu.html">
+<link rel="import" href="../ui-dropdown/ui-dropdown.html">
+
+<dom-module id="ui-widget">
+	<style is="custom-style">
+		paper-icon-button {
+			--iron-icon-height: 18px;
+			--iron-icon-width: 18px;
+		}
+	</style>
+	<style>
+		:host { 
+			display: flex;
+			flex-direction: column;
+			position: relative;
+			background-color: #fff;
+			border-radius: 3px;
+			padding: 20px;
+			transition: all .3s ease-in-out;
+			box-shadow: 0 2px 5px 0 rgba(0,0,0,.25),
+						0 2px 10px 0 rgba(0,0,0,.15);
+		}
+			:host > #nav {
+				position: absolute;
+				top: 10px;
+				right: 10px;
+				z-index: 2;
+				transition: all .3s ease-in-out;
+				text-align: center;
+				opacity: 0;
+				display: flex;
+				flex-direction: row-reverse;
+			}
+				:host:hover > #nav { opacity: 1; }
+				:host > #nav > ui-dropdown > ui-menu {
+					left: auto;
+					right: 100%;
+					transform-origin: top right;
+				}
+				
+			:host > #loading { 
+				position: absolute;
+				top: 5px;
+				left: 5px;
+				right: 5px;
+				bottom: 5px;
+				background-color: rgba(255,255,255,.5);
+				z-index: -1;
+				visibility: hidden;
+				opacity: 0;
+				transition: all .3s ease-in-out;
+			}
+			:host.loading > #loading {
+				z-index: 100;
+				visibility: visible;
+				opacity: 1;
+			}
+				:host > #loading > paper-spinner {
+					position: absolute;
+					top: 50%;
+					left: 50%;
+					margin: -16px 0 0 -16px;
+				}
+	</style>
+	<template>
+		<div id="loading">
+			<paper-spinner active></paper-spinner>
+		</div>
+		
+		<nav id="nav">
+			<paper-icon-button icon="close" on-click="close"></paper-icon-button>
+			
+			<ui-dropdown is-open="{{dropdownOpen}}" hidden="{{!options.length}}">
+				<paper-icon-button dropdown-toggle icon="more-vert"></paper-icon-button>
+
+				<ui-menu dropdown-menu class="inverted shadow z2">
+					<ul class="nav nav-stacked">
+						<template is="dom-repeat" items="{{options}}" as="option">
+							<li>
+								<a href="{{option.path}}" on-click="interceptOption">
+									<span>{{option.title}}</span>
+									<paper-ripple></paper-ripple>
+								</a>
+							</li>
+						</template>
+					</ul>
+				</ui-menu>
+			</ui-dropdown>
+		</nav>
+		
+		<content></content>
+	</template>
+
+	<script>
+		Polymer({
+			is: "ui-widget",
+			
+			behaviors: [
+				Polymer.NeonSharedElementAnimatableBehavior
+			],
+
+			properties: {
+				element: {
+					type: String
+				},
+				params: {
+					type: Object,
+					values: {}
+				},
+				title: {
+					type: String,
+					reflectToAttribute: false
+				},
+				options: {
+					type: Array,
+					value: []
+				},
+				dropdownOpen: {
+					type: Boolean,
+					value: false
+				},
+				loading: {
+					type: Boolean,
+					value: false,
+					observer: "onLoadingChange"
+				},
+				animationConfig: {
+					value: function() {
+						return {
+							entry: {
+								name: "fade-in-animation",
+								node: this
+							},
+							exit: {
+								name: "fade-out-animation",
+								node: this
+							}
+						}
+					}
+				}
+			},
+
+			close: function() {
+				this.fire("widget-close", this);
+			},
+
+			interceptOption: function(e) {
+				e.preventDefault();
+				e.stopPropagation();
+
+				this.set("dropdownOpen", false);
+
+				var option = e.model.option;
+				if (option.callback) {
+					option.callback(e, option);
+				}
+			},
+			
+			onLoadingChange: function() {
+				if (this.loading) {
+					this.classList.add("loading");
+				} else {
+					this.classList.remove("loading");
+				}
+			}
+		});
+	</script>
+</dom-module>

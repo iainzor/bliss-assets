@@ -1,0 +1,48 @@
+<link rel="import" href="bliss-app.html">
+
+<script>
+	Bliss.BlissAppPageBehavior = {
+		_bliss: null,
+		_pageTitle: null,
+		_pageTitleReplace: false,
+		
+		properties: {
+			pageTitle: {
+				type: String,
+				observer: "setPageTitle"
+			}
+		},
+		
+		listeners: {
+			"ui-page-enter": "__pageEnterOperations"
+		},
+		
+		setPageTitle: function(title, replace) {
+			this._pageTitle = title ? String.prototype.slice.call(title, 0) : null;
+			this._pageTitleReplace = replace === true ? true : false;
+			
+			this.async(function() {
+				this.bliss.setPageTitle(
+					this._pageTitle ? this._pageTitle.slice(0) : null, 
+					this._pageTitleReplace ? true : false
+				);
+			});
+		},
+		
+		setLoading: function(flag) {
+			this.bliss.setLoading(flag);
+		},
+		
+		get bliss() {
+			if (!this._bliss) {
+				this._bliss = document.createElement("bliss-app").app.root;
+			}
+			
+			return this._bliss;
+		},
+		
+		__pageEnterOperations: function(e) {
+			this.setPageTitle(this._pageTitle, this._pageTitleReplace);
+		}
+	};
+</script>

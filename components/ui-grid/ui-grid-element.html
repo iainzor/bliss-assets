@@ -1,0 +1,81 @@
+<link rel="import" href="./ui-grid-element-behavior.html">
+
+<dom-module id="ui-grid-element">
+	<style>
+		:host {
+			display: block;
+			padding: 10px;
+			margin: -10px 0 0 -10px;
+			width: 100%;
+			float: none !important;
+		}
+	</style>
+	
+	<template>
+		<content></content>
+	</template>
+	
+	<script>
+		Polymer({
+			is: "ui-grid-element",
+			
+			properties: {
+				colXs: {
+					type: Number,
+					value: 0,
+					notify: true
+				},
+				colSm: {
+					type: Number,
+					value: 0,
+					notify: true
+				},
+				colMd: {
+					type: Number,
+					value: 0,
+					notify: true
+				},
+				colLg: {
+					type: Number,
+					value: 0,
+					notify: true
+				}
+			},
+			
+			observers: [
+				"_calcElementClass(colXs, colSm, colMd, colLg)"
+			],
+			
+			_calcElementClass: function(colXs, colSm, colMd, colLg) {
+				var list = Array.prototype.slice.call(this.classList);
+				for (var i = 0, c; i < list.length; i++) {
+					c = list[i];
+					
+					if (c.match && c.match(/^col-[a-z]{2}-[0-9]{1,2}$/i)) {
+						this.classList.remove(c);
+					}
+				}
+				
+				var sizes = {
+					xs: colXs,
+					sm: colSm,
+					md: colMd,
+					lg: colLg
+				};
+				var type, width, i = 0;
+				for (type in sizes) {
+					i++;
+					width = sizes[type];
+					
+					if (width > 0 && width < 13) {
+						this.classList.add("col-"+ type +"-"+ width);
+					}
+				}
+				
+				this.async(function() {
+					this.fire("ui-grid-element-resized", this);
+				});
+			}
+		});
+	</script>
+</dom-module>

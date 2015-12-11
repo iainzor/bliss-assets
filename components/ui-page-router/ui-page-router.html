@@ -1,0 +1,108 @@
+<link rel="import" href="../ui-pages/ui-pages.html">
+<link rel="import" href="../ui-router/ui-router.html">
+
+<dom-module id="ui-page-router">
+	<style>
+		:host { display: block; }
+	</style>
+	
+	<template>
+		<ui-router id="router" routes="{{routes}}"></ui-router>
+		<ui-pages id="pages" pages="{{pages}}"></ui-pages>
+	</template>
+	
+	<script>
+		Polymer({
+			is: "ui-page-router",
+			
+			properties: {
+				routes: {
+					type: Array
+				},
+				pages: {
+					type: Array,
+					notify: true
+				},
+				page404: {
+					type: Object,
+					value: {
+						element: "ui-page-404",
+						root: "components"
+					}
+				},
+				rootDir: {
+					type: String,
+					value: "app"
+				}
+			},
+			
+			observers: [
+				"_onRoutesChanged(routes.splices)"
+			],
+			
+			ready: function() {
+				window.addEventListener("popstate", this._onHistoryStateChange.bind(this));
+				document.addEventListener("click", this._onWindowClick.bind(this));
+			},
+			
+			setPage: function(page) {
+				if (!page.root) {
+					page.root = this.rootDir +"/"+ page.element;
+				}
+				
+				var index = this.pages ? this.pages.indexOf(page) : -1;
+				
+				this.async(function() {
+					if (index > -1) {
+						this.$.pages.selected = index;
+					} else {
+						this.push("pages", page);
+					}
+
+					this.fire("route-change", page);
+				});
+			},
+			
+			_onRoutesChanged: function() {
+				this.pages = [];
+				this.$.router.clearCache();
+				this.$.pages.selected = 0;
+				
+				var page = this.$.router.find(window.location.pathname);
+				if (!page) {
+					page = this.page404;
+				}
+				this.setPage(page);
+			},
+			
+			_onHistoryStateChange: function(e) {
+				var path = e.state ? e.state : window.location.pathname;
+				var page = this.$.router.find(path);
+				
+				this.setPage(page);
+			},
+
+			_onWindowClick: function(e) {
+				var page, el = e.target, i = 0;
+				
+				while (el) {
+					if (el.nodeName === "A") {
+						page = this.$.router.find(el.href);
+						break;
+					} else {
+						el = el.parentNode;
+					}
+				}
+
+				if (page) {
+					e.preventDefault();
+					
+					if (!window.location.pathname.match("^/"+ page.path +"$")) {
+						window.history.pushState(page.path, page.path, page.path);
+						this.setPage(page);
+					}
+				}
+			}
+		});
+	</script>
+</dom-module>

@@ -1,0 +1,113 @@
+<link rel="import" href="../../bower_components/neon-animation/neon-animation.html">
+<link rel="import" href="ui-page.html">
+
+<dom-module id="ui-pages">
+	<style>
+		:host { display: block; }
+	</style>
+	
+	<template>
+		<neon-animated-pages id="pages" selected="{{selected}}" on-neon-animation-finish="_onAnimationFinish">
+			<template is="dom-repeat" items="{{pages}}" as="page">
+				<ui-page config="{{page}}"></ui-page>
+			</template>
+		</neon-animated-pages>
+	</template>
+	
+	<script>
+		Polymer({
+			is: "ui-pages",
+			
+			_currentPage: null,
+			_previousPage: null,
+			
+			properties: {
+				pages: {
+					type: Array,
+					notify: true
+				},
+				selected: {
+					type: Number,
+					value: 0,
+					notify: true,
+					observer: "select"
+				},
+				activePage: {
+					type: Object,
+					notify: true
+				}
+			},
+			
+			observers: [
+				"_onPagesChange(pages.splices)"
+			],
+			
+			select: function(selected, previous) {
+				if (typeof(previous) === "undefined") {
+					previous = selected;
+				}
+				
+				this.async(function() {
+					var pages = this.$.pages.querySelectorAll("ui-page");
+				
+					this._previousPage = pages[previous];
+					this._currentPage = pages[selected];
+					
+					
+					this.fire("page-change-start", {
+						previous: this._previousPage,
+						current: this._currentPage
+					});
+					
+					if (this._currentPage) {
+						this._currentPage.enter();
+					}
+					
+					if (this._previousPage && this._previousPage !== this._currentPage) {
+						this._previousPage.leave();
+					} else if (this._previousPage === this._currentPage) {
+						this.async(this._onAnimationFinish);
+					}
+				});
+			},
+			
+			_onPagesChange: function(splices) {
+				var selected = 0;
+				
+				if (splices && splices.indexSplices) {
+					for (var i = 0, change; i < splices.indexSplices.length; i++) {
+						change = splices.indexSplices[i];
+						selected = change.index - 1 + change.addedCount;
+					}
+				}
+				
+				this.async(function() {
+					if (this.selected !== selected) {
+						this.selected = selected;
+					} else {
+						this.select(selected, this.selected);
+					}
+				});
+			},
+			
+			_onAnimationFinish: function() {
+				this._processGrids();
+				this.fire("page-change-complete", {
+					previous: this._previousPage,
+					current: this._currentPage
+				});
+				
+				
+			},
+			
+			_processGrids: function() {
+				this.async(function() {
+					var grids = this.querySelectorAll("ui-grid");
+					for (var i = 0; i < grids.length; i++) {
+						grids[i].process();
+					}
+				});
+			}
+		});
+	</script>
+</dom-module>

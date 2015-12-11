@@ -1,0 +1,23 @@
+{
+  "name": "Bliss Assets",
+  "version": "0.0.0",
+  "authors": [
+    "Iain Edminster <iainedminster@gmail.com>"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "iron-ajax": "PolymerElements/iron-ajax#1.0.4",
+    "paper-icon-button": "PolymerElements/paper-icon-button#^1.0.0",
+    "paper-item": "PolymerElements/paper-item#1.0.3",
+    "paper-menu": "PolymerElements/paper-menu#1.1.0",
+    "paper-spinner": "PolymerElements/paper-spinner#^1.0.0",
+    "paper-tooltip": "PolymerElements/paper-tooltip#1.1.0"
+  }
+}

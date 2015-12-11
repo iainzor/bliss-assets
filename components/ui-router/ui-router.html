@@ -1,0 +1,84 @@
+<script>
+	(function() {
+		var routes = [];
+		
+		var routeMatches = function(path) {
+			var regex = new RegExp(this.route);
+			var matches = regex.exec(path);
+			var parsed = false;
+
+			if (matches !== null) {
+				parsed = {
+					path: path,
+					element: this.element,
+					params: {}
+				};
+
+				if (this.params) {
+					for (var i in this.params) {
+						parsed.params[this.params[i]] = matches[i];
+					}
+				}
+			}
+			
+			return parsed;
+		};
+		
+		Polymer({
+			is: "ui-router",
+
+			properties: {
+				routes: {
+					type: Array,
+					value: routes
+				}
+			},
+			
+			observers: [
+				"_onRoutesChange(routes.splices)"
+			],
+			
+			foundRoutes: {},
+			
+			find: function(path) {
+				var regex = new RegExp("^("+ window.location.origin +")?/?(.*)$");
+				path = path.replace(regex, "$2");
+
+				if (this.foundRoutes[path]) {
+					return this.foundRoutes[path];
+				}
+				
+				var found = false;
+
+				if (this.routes) {
+					this.routes.forEach(function(route) {
+						var match = route.matches(path);
+						if (match) {
+							found = match;
+							found.route = route;
+						}
+					});	
+				}
+
+				if (found) {
+					this.foundRoutes[path] = found;
+					return found;
+				}
+
+				return false;
+			},
+			
+			clearCache: function() {
+				this.foundRoutes = {};
+			},
+			
+			_onRoutesChange: function() {
+				if (this.routes) {
+					this.routes.forEach(function(route) {
+						route.matches = routeMatches.bind(route);
+					});
+				}
+			}
+		});
+	})();
+</script>

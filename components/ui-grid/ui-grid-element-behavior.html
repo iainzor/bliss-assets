@@ -1,0 +1,33 @@
+<link rel="import" href="./ui-grid.html">
+
+<script>
+	UIGrid.UIGridElementBehavior = {
+		processGrid: function() {
+			this.async(function() {
+				var grid = null;
+				var el = this.parentNode;
+
+				while (true) {
+					if (!el) {
+						break;
+					}
+					
+					if (el.tagName === "UI-GRID") {
+						grid = el;
+						break;
+					}
+
+					if (!el.parentNode) {
+						break;
+					} else {
+						el = el.parentNode;
+					}
+				}
+
+				if (grid) {
+					grid.process();
+				}
+			});
+		}
+	};
+</script>

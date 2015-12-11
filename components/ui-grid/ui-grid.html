@@ -1,0 +1,54 @@
+<script src="ui-grid.js"></script>
+
+<link rel="import" href="./ui-grid-element.html">
+
+<dom-module id="ui-grid">
+	<style>
+		:host {
+			display: block;
+			position: relative;
+		}
+	</style>
+	
+	<template>
+		<content></content>
+	</template>
+	
+	<script>
+		Polymer({
+			is: "ui-grid",
+			
+			listeners: {
+				"ui-grid-element-resized": "_process"
+			},
+			
+			ready: function() {
+				window.addEventListener("resize", this._process.bind(this));
+				window.addEventListener("route-change", this._process.bind(this));
+			},
+			
+			processTimer: null,
+			
+			process: function(delay) {
+				if (this.processTimer) {
+					//console.log("canceling");
+					this.cancelAsync(this.processTimer);
+				}
+				
+				this.processTimer = this.async(function() {
+					var items = Polymer.dom(this).querySelectorAll("ui-grid-element");
+					
+					if (items.length) {
+						//console.log("processing");
+						var grid = new UIGrid.Grid(this, items);
+						grid.process();
+					}
+				}, delay || 10);
+			},
+			
+			_process: function(e) {
+				this.process();
+			}
+		});
+	</script>
+</dom-module>

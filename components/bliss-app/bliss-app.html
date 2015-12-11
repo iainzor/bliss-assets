@@ -1,0 +1,130 @@
+<script src="bliss.js"></script>
+
+<link rel="import" href="../../bower_components/iron-ajax/iron-ajax.html">
+
+<dom-module id="bliss-app">
+	<template>
+		<iron-ajax id="appHandle" url="{{url}}" handle-as="json" on-response="_onAppResponse"></iron-ajax>
+	</template>
+
+	<script>
+		(function() {
+			var _appConfig = {
+				loaded: false,
+				loading: true,
+				ready: false
+			};
+			
+			Polymer({
+				is: "bliss-app",
+
+				properties: {
+					url: {
+						type: String,
+						value: "/app.json"
+					},
+					app: {
+						type: Object,
+						value: _appConfig,
+						notify: true
+					}
+				},
+				
+				observers: [
+					"_onAppChange(app.*)"
+				],
+
+				ready: function() {
+					if (!this.app.ready) {
+						this.app.ready = true;
+						this.app.root = this;
+						this.load();
+					}
+				},
+
+				load: function() {
+					this.app.loading = true;
+					this.$.appHandle.generateRequest();
+				},
+				
+				setPageTitle: function(title, replace) {
+					if (this.app.name) {
+						this.set("app.pageTitle", title || "");
+						var parts = [];
+
+						if (!replace) {
+							parts.push(this.app.name);
+						}
+
+						if (title) {
+							parts.push(title);
+						}
+
+						var titleEl = document.head.querySelector("title");
+						if (titleEl) {
+							titleEl.innerText = parts.join(" - ");
+						}
+					}
+				},
+				
+				setLoading: function(flag) {
+					this.set("app.loading", flag === false ? false : true);
+				},
+				
+				/**
+				 * Object of path watcher callbacks. Each item in the object is formatted:
+				 * "[watch-path]": [callback1,callback2]
+				 * 
+				 * @var Object
+				 */
+				_watchers: {},
+				
+				_PATH_ROOT: "app",
+				
+				/**
+				 * Watch for changes on a value within the app's configuration.
+				 * The path should be relative to the config root "app".  To access the app's name, for instance,
+				 * you would call `watch("name", _onName)`.
+				 * 
+				 * @param String path The path to watch
+				 * @param Function callback
+				 * @returns void
+				 */
+				watch: function(path, callback) {
+					path = path ? "app."+path : this._PATH_ROOT;
+					
+					if (typeof(callback) !== "function") {
+						throw Error("callback must be a function");
+					}
+					
+					this._watchers[path] = this._watchers[path] || [];
+					this._watchers[path].push(callback);
+				},
+				
+				fireWatchers: function(path, value) {
+					var watchers = this._watchers[path] || [];
+					for (var i = 0, w; i < watchers.length; i++) {
+						w = watchers[i];
+						w(value, this.app);
+					}
+				},
+				
+				_onAppChange: function(e) {
+					this.fireWatchers(e.path, e.value);
+					this.fire("change", this.app);
+				},
+
+				_onAppResponse: function(e) {
+					for (var i in e.detail.response) {
+						this.set("app."+i, e.detail.response[i]);
+					}
+					this.set("app.lastLoaded", new Date());
+					this.set("app.loading", false);
+					this.set("app.loaded", true);
+					
+					this.fire("load", this.app);
+				}
+			});
+		})();
+	</script>
+</dom-module>
